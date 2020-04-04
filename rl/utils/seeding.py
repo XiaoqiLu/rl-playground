@@ -10,6 +10,7 @@ def multiple_seeds(seed=None, size=None):
 
     Returns:
         seeds
+
     """
     rng = np.random.RandomState(seed=seed)
     seeds = rng.tomaxint(size=size)
