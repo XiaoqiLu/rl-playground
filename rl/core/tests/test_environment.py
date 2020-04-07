@@ -29,9 +29,10 @@ def test_class_environment():
             self.agent = agent
             self.show = show
 
+            self.rng = np.random.RandomState()
             self.n_step = 0
             self.state = 0
-            self.rng = np.random.RandomState()
+            self.reset()
 
         def step(self):
             self.n_step += 1
@@ -51,8 +52,9 @@ def test_class_environment():
         def play(self):
             while not self.is_terminated():
                 self.step()
-            print("-" * 20)
-            print("Terminated!")
+            if self.show:
+                print("-" * 20)
+                print("Terminated!")
             return self
 
         def reset(self):
@@ -66,13 +68,13 @@ def test_class_environment():
             self.agent.seed(seeds[1])
             return self
 
+    print("")
     test_agent = TestAgent()
 
-    test_environment = TestEnvironment(agent=test_agent, show=True)
-    print("")
+    test_environment = TestEnvironment(agent=test_agent)
+    test_environment.seed(1)
     test_environment.play()
-    test_environment.play()
-
+    assert test_environment.n_step == 24
     test_environment.reset()
-    print("")
     test_environment.play()
+    assert test_environment.n_step == 43
