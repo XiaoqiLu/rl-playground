@@ -6,7 +6,23 @@ class Environment(ABC):
     abstract class for environment
     unlike the Env class in OpenAI Gym, the agent(s) are elements of the Environment
     includes dynamics of the system, distribution of observation(s) to agent(s), auto-play (with termination rule)
+
+    the following methods need to be implemented:
+        step
+        is_terminated
+        reset
+        seed
     """
+
+    def play(self):
+        """
+        auto-play until termination
+        Returns:
+
+        """
+        while not self.is_terminated():
+            self.step()
+        return self
 
     @abstractmethod
     def step(self):
@@ -23,15 +39,6 @@ class Environment(ABC):
         checks if the system has reached stopping criteria
         Returns:
             True/False
-
-        """
-        pass
-
-    @abstractmethod
-    def play(self):
-        """
-        auto-play until termination
-        Returns:
 
         """
         pass

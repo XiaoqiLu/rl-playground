@@ -4,14 +4,19 @@ from abc import ABC, abstractmethod
 class Agent(ABC):
     """
     abstract class for agent
+
+    the following methods need to be implemented
+        act
+        reset
+        seed
     """
 
     @abstractmethod
-    def act(self, observation):
+    def act(self, obs):
         """
         takes observation and outputs action
         Args:
-            observation: observation feeding to agent
+            obs: observation feeding to agent
 
         Returns:
             action
