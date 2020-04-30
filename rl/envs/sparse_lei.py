@@ -1,28 +1,8 @@
 import numpy as np
 
-from rl.core.agent import Agent
-from rl.core.environment import Environment
-from rl.utils.seeding import multiple_seeds
-
-
-class AgentRandom(Agent):
-
-    def __init__(self, action_space, p=None):
-        self.action_space = action_space
-        self.p = p
-
-        self.rng = np.random.RandomState()
-
-    def act(self, observation):
-        action = self.rng.choice(self.action_space, self.p)
-        return action
-
-    def reset(self):
-        return self
-
-    def seed(self, seed):
-        self.rng.seed(seed)
-        return self
+from rl.agents import AgentDiscreteRandom, AgentDiscreteQ
+from rl.core import Environment
+from rl.utils import multiple_seeds, Recorder
 
 
 class SparseLei(Environment):
@@ -34,25 +14,36 @@ class SparseLei(Environment):
     SparseLei introduces nuisance dimensions to test if RL algorithm can pick up the "sparsity" structure from data
     """
 
-    def __init__(self, nuisance=0, tau=0.0, shift=-10.0, noise=1.0, agent=None, show=True):
+    n_step = 0
+    action = None
+    reward = None
+    state = None
+    recorder = Recorder()
+
+    def __init__(self, nuisance=0, tau=0.0, shift=-10.0, state_noise=1.0, reward_noise=1.0, max_step=10,
+                 agent=None, show=True, record=True):
         self.nuisance = nuisance
         self.tau = tau
         self.shift = shift
-        self.noise = noise
+        self.state_noise = state_noise
+        self.reward_noise = reward_noise
+        self.max_step = max_step
         if agent is None:
-            self.agent = AgentRandom((-1, 1))
+            self.agent = AgentDiscreteRandom((0, 1))
         else:
             self.agent = agent
         self.show = show
+        self.record = record
 
-        self.n_step = 0
+        self.dim = 3 + self.nuisance
         self.rng = np.random.RandomState()
-        self.state = np.zeros(3 + self.nuisance)
 
-        self.A = 0.4 * np.identity(3 + self.nuisance)
+        self.A = 0.4 * np.identity(self.dim)
         if self.nuisance > 1:
             self.A[3:, 3:] -= 0.1 * np.diagflat(np.ones(self.nuisance - 1), 1)
             self.A[3:, 3:] -= 0.1 * np.diagflat(np.ones(self.nuisance - 1), -1)
+
+        self.reset()
 
     def set_agent(self, agent):
         self.agent = agent
@@ -60,34 +51,40 @@ class SparseLei(Environment):
 
     def step(self):
         self.n_step += 1
-        action = self.agent.act(self.state)
-        state_new = np.dot(self.A, self.state) + self.noise * self.rng.randn(3 + self.nuisance)
-        state_new[2] += 0.2 * self.state[2] * action + 0.4 * action
+        self.action = self.agent.act(self.state)
+        state_new = np.dot(self.A, self.state) + self.state_noise * self.rng.randn(self.dim)
+        state_new[2] += 0.2 * self.state[2] * self.action + 0.4 * self.action
         self.state = state_new
-        reward = self.shift + 0.4 * (self.state[0] + self.state[1]) + \
-                 0.2 * action * (1 + self.state[0] + self.state[1]) - self.tau * self.state[2] + \
-                 self.noise * self.rng.randn()
+        self.reward = self.shift + 0.4 * (self.state[0] + self.state[1]) + \
+                      0.2 * self.action * (1 + self.state[0] + self.state[1]) - self.tau * self.state[2] + \
+                      self.reward_noise * self.rng.randn()
+
+        if self.record:
+            self.recorder.rec({'action': int(self.action),
+                               'reward': self.reward,
+                               'state': self.state.tolist()})
+
         if self.show:
-            print("-" * 20)
-            print("action: ", action)
-            print("state: ", self.state)
-            print("reward: ", reward)
+            print("step: ", self.n_step)
+            print("  action: ", self.action)
+            print("  reward: ", self.reward)
+            print("  state: ", self.state)
         return self
 
     def is_terminated(self):
-        return self.n_step > 10
-
-    def play(self):
-        while not self.is_terminated():
-            self.step()
-        if self.show:
-            print("-" * 20)
-            print("Terminated!")
-        return self
+        return self.n_step > self.max_step
 
     def reset(self):
         self.n_step = 0
-        self.state = np.zeros(3 + self.nuisance)
+        self.state = self.rng.randn(self.dim)
+
+        if self.record:
+            self.recorder.reset({'state': self.state.tolist()})
+        self.agent.reset()
+
+        if self.show:
+            print("  step: ", self.n_step)
+            print("  state: ", self.state)
         return self
 
     def seed(self, seed):
@@ -95,3 +92,26 @@ class SparseLei(Environment):
         self.rng.seed(seeds[0])
         self.agent.seed(seeds[1])
         return self
+
+
+if __name__ == '__main__':
+    env = SparseLei(shift=0, reward_noise=0, max_step=100)
+    env.play()
+    cum_reward = env.recorder.sum(fun=lambda data: data['reward'], disc=0.9, start=1)
+    print(cum_reward)
+
+    theta = np.array([1, 1, 1, 1, 0, 0, 0, 0])
+
+
+    def q(state, action):
+        state_ = np.insert(state[:3], 0, 1)
+        if action == 0:
+            return np.dot(theta[:4], state_)
+        else:
+            return np.dot(theta[4:], state_)
+
+
+    env = SparseLei(shift=0, reward_noise=0, max_step=10, agent=AgentDiscreteQ((0, 1), q=q))
+    env.play()
+    cum_reward = env.recorder.sum(fun=lambda data: data['reward'], disc=0.9, start=1)
+    print(cum_reward)

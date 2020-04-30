@@ -6,9 +6,18 @@ class Recorder:
     Recorder class to recording things like trajectories
     """
 
-    def __init__(self):
-        self.data = []
+    n = 0
+    data = []
+
+    def __init__(self, init_data=None):
+        self.reset(init_data)
+
+    def reset(self, init_data=None):
         self.n = 0
+        if init_data is None:
+            self.data = []
+        else:
+            self.data = [init_data]
 
     def rec(self, new_data):
         self.data.append(new_data)
