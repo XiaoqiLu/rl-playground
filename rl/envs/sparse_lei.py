@@ -76,7 +76,7 @@ class SparseLei(Environment):
 
     def reset(self):
         self.n_step = 0
-        self.state = self.rng.randn(self.dim)
+        self.state = self.state_noise * self.rng.randn(self.dim)
 
         if self.record:
             self.recorder.reset({'state': self.state.tolist()})
