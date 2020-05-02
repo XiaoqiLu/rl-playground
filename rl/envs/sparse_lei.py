@@ -72,7 +72,7 @@ class SparseLei(Environment):
         return self
 
     def is_terminated(self):
-        return self.n_step > self.max_step
+        return self.n_step >= self.max_step
 
     def reset(self):
         self.n_step = 0
