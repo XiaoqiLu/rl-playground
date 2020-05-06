@@ -13,7 +13,8 @@ class AgentDiscreteRandom(Agent):
         self.rng = np.random.RandomState()
 
     def act(self, obs):
-        action = self.rng.choice(self.action_space, p=self.p)
+        idx = self.rng.choice(len(self.action_space), p=self.p)
+        action = self.action_space[idx]
         return action
 
     def reset(self):
@@ -41,11 +42,12 @@ class AgentDiscreteQ(Agent):
     def act(self, obs):
         values = np.array(list(map(lambda a: self.q(obs, a), self.action_space)))
         if self.dist == 'max':
-            action = np.argmax(values)
+            idx = np.argmax(values)
         elif self.dist == 'gibbs':
-            action = self.rng.choice(self.action_space, p=softmax(values / self.temperature))
+            idx = self.rng.choice(len(self.action_space), p=softmax(values / self.temperature))
         else:
-            action = self.rng.choice(self.action_space)
+            idx = self.rng.choice(len(self.action_space))
+        action = self.action_space[idx]
         return action
 
     def reset(self):
