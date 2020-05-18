@@ -52,12 +52,12 @@ class SparseLei(Environment):
     def step(self):
         self.n_step += 1
         self.action = self.agent.act(self.state)
-        state_new = np.dot(self.A, self.state) + self.state_noise * self.rng.randn(self.dim)
-        state_new[2] += 0.2 * self.state[2] * self.action + 0.4 * self.action
-        self.state = state_new
         self.reward = self.shift + 0.4 * (self.state[0] + self.state[1]) + \
                       0.2 * self.action * (1 + self.state[0] + self.state[1]) - self.tau * self.state[2] + \
                       self.reward_noise * self.rng.randn()
+        state_new = np.dot(self.A, self.state) + self.state_noise * self.rng.randn(self.dim)
+        state_new[2] += 0.2 * self.state[2] * self.action + 0.4 * self.action
+        self.state = state_new
 
         if self.record:
             self.recorder.rec({'action': int(self.action),
