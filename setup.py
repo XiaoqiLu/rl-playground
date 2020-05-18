@@ -8,5 +8,9 @@ setup(
     license='',
     author='XL',
     author_email='lx2170@cumc.columbia.edu',
-    description='my rl playground'
+    description='my rl playground',
+    install_requires=[
+        'scipy',
+        'numpy',
+    ],
 )
