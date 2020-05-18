@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(
-    name='rl',
+    name='rl-playground',
     version='1.0',
     packages=['rl', 'rl.core', 'rl.envs', 'rl.utils', 'rl.agents'],
     url='',
