@@ -1,8 +1,8 @@
 import numpy as np
 
-from rl.agents import AgentDiscreteRandom, AgentDiscreteQ
+from rl.agents import AgentDiscreteRandom
 from rl.core import Environment
-from rl.utils import multiple_seeds, Recorder
+from rl.utils import multiple_seeds
 
 
 class SparseLei(Environment):
@@ -18,22 +18,15 @@ class SparseLei(Environment):
     action = None
     reward = None
     state = None
-    recorder = Recorder()
 
-    def __init__(self, nuisance=0, tau=0.0, shift=-10.0, state_noise=1.0, reward_noise=1.0, max_step=10,
-                 agent=None, show=True, record=True):
+    def __init__(self, nuisance=0, tau=0.0, shift=0.0, state_noise=1.0, reward_noise=1.0, max_step=10):
         self.nuisance = nuisance
         self.tau = tau
         self.shift = shift
         self.state_noise = state_noise
         self.reward_noise = reward_noise
         self.max_step = max_step
-        if agent is None:
-            self.agent = AgentDiscreteRandom((0, 1))
-        else:
-            self.agent = agent
-        self.show = show
-        self.record = record
+        self.agent = AgentDiscreteRandom((0, 1))
 
         self.dim = 3 + self.nuisance
         self.rng = np.random.RandomState()
@@ -45,8 +38,11 @@ class SparseLei(Environment):
 
         self.reset()
 
-    def set_agent(self, agent):
-        self.agent = agent
+    def set_agent(self, agent=None):
+        if agent is None:
+            self.agent = AgentDiscreteRandom((0, 1))
+        else:
+            self.agent = agent
         return self
 
     def step(self):
@@ -59,16 +55,19 @@ class SparseLei(Environment):
         state_new[2] += 0.2 * self.state[2] * self.action + 0.4 * self.action
         self.state = state_new
 
-        if self.record:
-            self.recorder.rec({'action': int(self.action),
-                               'reward': self.reward,
-                               'state': self.state.tolist()})
+        meta_data = {'action': int(self.action),
+                     'reward': self.reward,
+                     'state': self.state.tolist()}
+        return meta_data
 
-        if self.show:
-            print("step: ", self.n_step)
-            print("  action: ", self.action)
-            print("  reward: ", self.reward)
-            print("  state: ", self.state)
+    def render(self):
+        print("-- step " + str(self.n_step) + " --")
+        if self.n_step == 0:
+            print("state: " + str(self.state))
+        else:
+            print("action: " + str(self.action))
+            print("reward: " + str(self.reward))
+            print("state: " + str(self.state))
         return self
 
     def is_terminated(self):
@@ -76,16 +75,12 @@ class SparseLei(Environment):
 
     def reset(self):
         self.n_step = 0
+        self.action = None
+        self.reward = None
         self.state = self.state_noise * self.rng.randn(self.dim)
-
-        if self.record:
-            self.recorder.reset({'state': self.state.tolist()})
         self.agent.reset()
-
-        if self.show:
-            print("  step: ", self.n_step)
-            print("  state: ", self.state)
-        return self
+        meta_data = {'state': self.state.tolist()}
+        return meta_data
 
     def seed(self, seed):
         seeds = multiple_seeds(seed, 2)
@@ -95,23 +90,6 @@ class SparseLei(Environment):
 
 
 if __name__ == '__main__':
-    env = SparseLei(shift=0, reward_noise=0, max_step=100)
-    env.play()
-    cum_reward = env.recorder.sum(fun=lambda data: data['reward'], disc=0.9, start=1)
-    print(cum_reward)
-
-    theta = np.array([1, 1, 1, 1, 0, 0, 0, 0])
-
-
-    def q(state, action):
-        state_ = np.insert(state[:3], 0, 1)
-        if action == 0:
-            return np.dot(theta[:4], state_)
-        else:
-            return np.dot(theta[4:], state_)
-
-
-    env = SparseLei(shift=0, reward_noise=0, max_step=10, agent=AgentDiscreteQ((0, 1), q=q))
-    env.play()
-    cum_reward = env.recorder.sum(fun=lambda data: data['reward'], disc=0.9, start=1)
-    print(cum_reward)
+    env = SparseLei()
+    recorder = env.play(n=2)
+    print(recorder[0].sum(lambda data: data['reward'], discount=0, start=1))

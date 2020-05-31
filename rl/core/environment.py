@@ -29,7 +29,7 @@ class Environment(ABC):
             if render:
                 self.render()
             while not self.is_terminated():
-                recorder[i].rec(self.step())
+                recorder[i].rec(new_data=self.step())
                 if render:
                     self.render()
         return recorder
