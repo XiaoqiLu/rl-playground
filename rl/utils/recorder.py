@@ -35,12 +35,12 @@ class Recorder:
             self.n = len(self.data)
         return self
 
-    def sum(self, fun, disc=1.0, start=0, end=None):
+    def sum(self, fun, discount=1.0, start=0, end=None):
         if end is None:
             end = self.n
         s = 0
         for idx in reversed(range(start, end)):
-            s *= disc
+            s *= discount
             s += fun(self.data[idx])
         return s
 
@@ -58,6 +58,6 @@ if __name__ == '__main__':
 
     print(recorder.data)
     print("-" * 20)
-    print(recorder.sum(my_fun, disc=1))
+    print(recorder.sum(my_fun, discount=1))
     print("-" * 20)
-    print(recorder.sum(my_fun, disc=0.8))
+    print(recorder.sum(my_fun, discount=0.8))

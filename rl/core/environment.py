@@ -1,33 +1,53 @@
 from abc import ABC, abstractmethod
 
+from rl.utils import Recorder
+
 
 class Environment(ABC):
     """
     abstract class for environment
-    unlike the Env class in OpenAI Gym, the agent(s) are elements of the Environment
-    includes dynamics of the system, distribution of observation(s) to agent(s), auto-play (with termination rule)
+    different from the Env class in OpenAI Gym, the agent(s) are elements of the Environment
+    this makes auto-play possible via play() method
 
     the following methods need to be implemented:
         step
+        render
         is_terminated
         reset
         seed
     """
 
-    def play(self):
+    def play(self, n=1, render=True):
         """
         auto-play until termination
         Returns:
-
+            recorder(s), if any
         """
-        while not self.is_terminated():
-            self.step()
-        return self
+        recorder = []
+        for i in range(n):
+            recorder.append(Recorder(init_data=self.reset()))
+            if render:
+                self.render()
+            while not self.is_terminated():
+                recorder[i].rec(self.step())
+                if render:
+                    self.render()
+        return recorder
 
     @abstractmethod
     def step(self):
         """
         execute one step of dynamics
+        if agents are included in the environment, then one step of actions are also executed
+        Returns:
+            meta-data to be written into recorder(s), if any
+        """
+        pass
+
+    @abstractmethod
+    def render(self):
+        """
+        render (print, display, or other formats) current status
         Returns:
 
         """
@@ -49,7 +69,7 @@ class Environment(ABC):
         resets everything to initial status
         note that the state of RNG(s), if any, does not reset
         Returns:
-
+            initial meta-data to be written into recorder(s), if any
         """
         pass
 
