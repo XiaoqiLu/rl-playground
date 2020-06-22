@@ -1,6 +1,3 @@
-import json
-
-
 class Recorder:
     """
     Recorder class to recording things like trajectories
@@ -22,17 +19,6 @@ class Recorder:
     def rec(self, new_data):
         self.data.append(new_data)
         self.n += 1
-        return self
-
-    def save(self, file):
-        with open(file, 'w') as f:
-            json.dump(self.data, f)
-        return self
-
-    def load(self, file):
-        with open(file, 'r') as f:
-            self.data = json.load(f)
-            self.n = len(self.data)
         return self
 
     def sum(self, fun, discount=1.0, start=0, end=None):

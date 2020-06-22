@@ -23,16 +23,16 @@ class Environment(ABC):
         Returns:
             recorder(s), if any
         """
-        recorder = []
+        recorders = []
         for i in range(n):
-            recorder.append(Recorder(init_data=self.reset()))
+            recorders.append(Recorder(init_data=self.reset()))
             if render:
                 self.render()
             while not self.is_terminated():
-                recorder[i].rec(new_data=self.step())
+                recorders[i].rec(new_data=self.step())
                 if render:
                     self.render()
-        return recorder
+        return recorders
 
     @abstractmethod
     def step(self):

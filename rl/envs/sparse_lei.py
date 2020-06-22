@@ -55,9 +55,9 @@ class SparseLei(Environment):
         state_new[2] += 0.2 * self.state[2] * self.action + 0.4 * self.action
         self.state = state_new
 
-        meta_data = {'action': int(self.action),
+        meta_data = {'action': self.action,
                      'reward': self.reward,
-                     'state': self.state.tolist()}
+                     'state': self.state}
         return meta_data
 
     def render(self):
@@ -79,7 +79,7 @@ class SparseLei(Environment):
         self.reward = None
         self.state = self.state_noise * self.rng.randn(self.dim)
         self.agent.reset()
-        meta_data = {'state': self.state.tolist()}
+        meta_data = {'state': self.state}
         return meta_data
 
     def seed(self, seed):
@@ -91,5 +91,5 @@ class SparseLei(Environment):
 
 if __name__ == '__main__':
     env = SparseLei()
-    recorder = env.play(n=2)
-    print(recorder[0].sum(lambda data: data['reward'], discount=0, start=1))
+    recorders = env.play(n=2)
+    print(recorders[0].sum(lambda data: data['reward'], discount=0, start=1))

@@ -43,9 +43,9 @@ class SparseBin(Environment):
         state_new[0] = mu + self.rng.randn()
         self.state = state_new
 
-        meta_data = {'action': int(self.action),
+        meta_data = {'action': self.action,
                      'reward': self.reward,
-                     'state': self.state.tolist()}
+                     'state': self.state}
         return meta_data
 
     def render(self):
@@ -67,7 +67,7 @@ class SparseBin(Environment):
         self.reward = None
         self.state = self.rng.randn(self.dim)
         self.agent.reset()
-        meta_data = {'state': self.state.tolist()}
+        meta_data = {'state': self.state}
         return meta_data
 
     def seed(self, seed):
@@ -78,6 +78,6 @@ class SparseBin(Environment):
 
 
 if __name__ == '__main__':
-    env = SparseBin()
-    recorder = env.play(n=2)
-    print(recorder[0].sum(lambda data: data['reward'], discount=0, start=1))
+    env = SparseBin(nuisance=2)
+    recorders = env.play(n=2)
+    print(recorders[0].sum(lambda data: data['reward'], discount=0, start=1))
