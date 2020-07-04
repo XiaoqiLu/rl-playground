@@ -89,6 +89,37 @@ class SparseLei(Environment):
         return self
 
 
+class SparseLeiModified(SparseLei):
+
+    def __init__(self, nuisance=0, tau=0.0, shift=0.0, state_noise=1.0, reward_noise=1.0, max_step=10, cor=False):
+        super().__init__(nuisance=nuisance, tau=tau, shift=shift,
+                         state_noise=state_noise, reward_noise=reward_noise, max_step=max_step)
+        self.cor = cor
+
+        self.A = 0.6 * np.identity(self.dim)
+        if self.nuisance > 1:
+            self.A[3:, 3:] -= 0.2 * np.diagflat(np.ones(self.nuisance - 1), 1)
+            self.A[3:, 3:] -= 0.2 * np.diagflat(np.ones(self.nuisance - 1), -1)
+        if self.cor:
+            self.A[:3, :3] -= 0.2 * np.diagflat(np.ones(2), 1)
+            self.A[:3, :3] -= 0.2 * np.diagflat(np.ones(2), -1)
+
+    def step(self):
+        self.n_step += 1
+        self.action = self.agent.act(self.state)
+        self.reward = self.shift + 0.8 * (self.state[0] + self.state[1]) + \
+                      0.4 * self.action * (-1 + self.state[0] + self.state[1]) - 4 * self.tau * self.state[2] + \
+                      self.reward_noise * self.rng.randn()
+        state_new = np.dot(self.A, self.state) + self.state_noise * self.rng.randn(self.dim)
+        state_new[2] += 0.3 * self.state[2] * self.action + 0.8 * self.action
+        self.state = state_new
+
+        meta_data = {'action': self.action,
+                     'reward': self.reward,
+                     'state': self.state}
+        return meta_data
+
+
 if __name__ == '__main__':
     env = SparseLei()
     recorders = env.play(n=2)

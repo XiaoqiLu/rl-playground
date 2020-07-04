@@ -13,7 +13,7 @@ def multiple_seeds(seed=None, size=None):
 
     """
     rng = np.random.RandomState(seed=seed)
-    seeds = rng.tomaxint(size=size)
+    seeds = rng.randint(low=0, high=2**16, size=size)
     return seeds
 
 
