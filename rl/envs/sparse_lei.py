@@ -97,21 +97,21 @@ class SparseLeiModified(SparseLei):
         self.cor = cor
 
         self.A = 0.6 * np.identity(self.dim)
-        if self.nuisance > 1:
-            self.A[3:, 3:] -= 0.2 * np.diagflat(np.ones(self.nuisance - 1), 1)
-            self.A[3:, 3:] -= 0.2 * np.diagflat(np.ones(self.nuisance - 1), -1)
-        if self.cor:
-            self.A[:3, :3] -= 0.2 * np.diagflat(np.ones(2), 1)
-            self.A[:3, :3] -= 0.2 * np.diagflat(np.ones(2), -1)
+        if cor:
+            self.A[:3, :3] += 0.1 * (np.ones((3, 3)) - np.identity(3))
+            if self.nuisance > 1:
+                for j in range(3, self.dim - 1, 2):
+                    self.A[j, j + 1] = 0.2
+                    self.A[j + 1, j] = 0.2
 
     def step(self):
         self.n_step += 1
         self.action = self.agent.act(self.state)
         self.reward = self.shift + 0.8 * (self.state[0] + self.state[1]) + \
-                      0.4 * self.action * (-1 + self.state[0] + self.state[1]) - 4 * self.tau * self.state[2] + \
-                      self.reward_noise * self.rng.randn()
+                      1.2 * self.action * (-0.5 + self.state[0] + self.state[1] - 0.5 * self.state[2]) - \
+                      4 * self.tau * self.state[2] + self.reward_noise * self.rng.randn()
         state_new = np.dot(self.A, self.state) + self.state_noise * self.rng.randn(self.dim)
-        state_new[2] += 0.3 * self.state[2] * self.action + 0.8 * self.action
+        state_new[2] += 0.4 * self.state[2] * self.action + 1.0 * self.action
         self.state = state_new
 
         meta_data = {'action': self.action,
@@ -121,6 +121,6 @@ class SparseLeiModified(SparseLei):
 
 
 if __name__ == '__main__':
-    env = SparseLei()
+    env = SparseLeiModified(nuisance=4, cor=True)
     recorders = env.play(n=2)
     print(recorders[0].sum(lambda data: data['reward'], discount=0, start=1))
